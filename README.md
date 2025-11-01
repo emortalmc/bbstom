@@ -4,7 +4,7 @@ Blockbench renderer for Minestom
 ## Usage
 To animate a player, you will need the [Stable Player Display resource pack](https://github.com/bradleyq/stable_player_display)
 
-You may also find it helpful to use the provided player.bbmodel (Credit to [emula_izzy](https://emula-izzy.neocities.org/))
+You may also find it helpful to use the provided [player.bbmodel](https://github.com/emortaldev/bbstom/blob/main/assets/player.bbmodel) (Credit to [emula_izzy](https://emula-izzy.neocities.org/))
 ```java
 byte[] bytes = Files.readAllBytes(Path.of("player.bbmodel"));
 final BBModel model = BBModel.fromBytes(bytes);
