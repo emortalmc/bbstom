@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("com.gradleup.shadow") version "9.2.2"
+    `maven-publish`
 }
 
 group = "dev.emortal"
@@ -20,22 +20,36 @@ dependencies {
     implementation("org.joml:joml:1.10.8")
 }
 
-tasks {
-    shadowJar {
-        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-        mergeServiceFiles()
+publishing {
+    repositories {
+        maven {
+            name = "development"
+            url = uri("https://repo.emortal.dev/snapshots")
+            credentials {
+                username = System.getenv("MAVEN_USERNAME")
+                password = System.getenv("MAVEN_SECRET")
+            }
+        }
+        maven {
+            name = "release"
+            url = uri("https://repo.emortal.dev/releases")
+            credentials {
+                username = System.getenv("MAVEN_USERNAME")
+                password = System.getenv("MAVEN_SECRET")
+            }
+        }
     }
 
-    withType<AbstractArchiveTask> {
-        isPreserveFileTimestamps = false
-        isReproducibleFileOrder = true
-    }
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "dev.emortal.minestom"
+            artifactId = "game-sdk"
 
-    build {
-        dependsOn(shadowJar)
-    }
+            val commitHash = System.getenv("COMMIT_HASH_SHORT")
+            val releaseVersion = System.getenv("RELEASE_VERSION")
+            version = commitHash ?: releaseVersion ?: "local"
 
-    withType<JavaCompile> {
-        options.encoding = "UTF-8"
+            from(components["java"])
+        }
     }
 }
