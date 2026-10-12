@@ -111,7 +111,9 @@ public class BBModel {
     }
 
     public @Nullable String getElementUUID(String elementName) {
-        return elementMap.get(elementName).uuid();
+        BBElement element = elementMap.get(elementName);
+        if (element == null) return null;
+        return element.uuid();
     }
 
     public @Nullable BBElement getElementByUUID(String uuid) {
