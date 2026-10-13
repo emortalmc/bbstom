@@ -128,25 +128,19 @@ public class BBModel {
         return groupMap.get(name);
     }
 
-    /**
-     * Local Euler rotation (degrees) of a node: bind rotation + animation rotation.
-     * Blockbench adds the two as Euler angles, then builds a ZYX rotation from the sum.
-     */
-    private Vector3f localEuler(String uuid, BBAnimation animation, float time) {
-        Vector3f rot = new Vector3f();
+    /** Local rotation including the bind pose and the animator's interpolation mode. */
+    private Quaternionf localRotation(String uuid, @Nullable BBAnimation animation, float time) {
         BBGroup group = getGroupByUUID(uuid);
-        if (group != null) rot.add(group.rotation());
-
-        BBAnimator animator = animation.getAnimatorByUUID(uuid);
-        if (animator != null) rot.add(animator.getRotation(time));
-        return rot;
+        Vector3f bindRotation = group == null ? new Vector3f() : group.rotation();
+        BBAnimator animator = animation == null ? null : animation.getAnimatorByUUID(uuid);
+        return animator == null ? quatFromRot(bindRotation) : animator.getRotationQuaternion(time, bindRotation);
     }
 
     /** World rotation of the node: root * ... * parent * node. */
     public Quaternionf getRotation(BBAnimation animation, float time, String uuid) {
         Quaternionf quat = new Quaternionf();
         for (String id = uuid; id != null; id = getParent(id)) {
-            quat.premul(BBModel.quatFromRot(localEuler(id, animation, time)));
+            quat.premul(localRotation(id, animation, time));
         }
         return quat;
     }
@@ -163,7 +157,7 @@ public class BBModel {
 
             if (group != null) {
                 Vector3f pivot = group.origin();
-                Quaternionf rot = BBModel.quatFromRot(localEuler(id, animation, time));
+                Quaternionf rot = localRotation(id, animation, time);
                 point.sub(pivot).rotate(rot).add(pivot);
             }
             if (animator != null) point.add(animator.getPosition(time));
@@ -191,10 +185,8 @@ public class BBModel {
             Matrix4f node = new Matrix4f();
             if (animator != null) node.translate(animator.getPosition(time));
             if (group != null) {
-                Vector3f rot = new Vector3f(group.rotation());
-                if (animator != null) rot.add(animator.getRotation(time));
                 Vector3f o = group.origin();
-                node.translate(o).rotate(quatFromRot(rot)).translate(-o.x, -o.y, -o.z);
+                node.translate(o).rotate(localRotation(id, animation, time)).translate(-o.x, -o.y, -o.z);
             }
             world.mulLocal(node); // node * world
         }
